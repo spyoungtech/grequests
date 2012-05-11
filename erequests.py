@@ -1,23 +1,19 @@
 # -*- coding: utf-8 -*-
 
 """
-grequests
+erequests
 ~~~~~~~~~
 
 This module contains an asynchronous replica of ``requests.api``, powered
-by gevent. All API methods return a ``Request`` instance (as opposed to
+by eventlet. All API methods return a ``Request`` instance (as opposed to
 ``Response``). A list of requests can be sent with ``map()``.
 """
 
-try:
-    import gevent
-    from gevent import monkey as curious_george
-    from gevent.pool import Pool
-except ImportError:
-    raise RuntimeError('Gevent is required for grequests.')
+import eventlet
+from eventlet.greenpool import GreenPool
 
 # Monkey-patch.
-curious_george.patch_all(thread=False, select=False)
+eventlet.monkey_patch(os=True, socket=True, time=True)
 
 from requests import api
 
@@ -32,17 +28,10 @@ def patched(f):
     """Patches a given API function to not send."""
 
     def wrapped(*args, **kwargs):
-
-        kwargs['return_response'] = False
-        kwargs['prefetch'] = True
-
         config = kwargs.get('config', {})
-        config.update(safe_mode=True)
-
-        kwargs['config'] = config
-
+        config['safe_mode'] = True
+        kwargs.update(dict(return_response=False, prefetch=True, config=config))
         return f(*args, **kwargs)
-
     return wrapped
 
 
@@ -51,10 +40,9 @@ def send(r, pool=None, prefetch=False):
     specified this method blocks. Pools are useful because you can specify size
     and can hence limit concurrency."""
 
-    if pool != None:
+    if pool is not None:
         return pool.spawn(r.send, prefetch=prefetch)
-
-    return gevent.spawn(r.send, prefetch=prefetch)
+    return eventlet.spawn(r.send, prefetch=prefetch)
 
 
 # Patched requests.api functions.
@@ -78,9 +66,11 @@ def map(requests, prefetch=True, size=None):
 
     requests = list(requests)
 
-    pool = Pool(size) if size else None
+    pool = GreenPool(size) if size else None
     jobs = [send(r, pool, prefetch=prefetch) for r in requests]
-    gevent.joinall(jobs)
+    if pool is not None:
+        pool.waitall()
+    [j.wait() for j in jobs]
 
     return [r.response for r in requests]
 
@@ -94,13 +84,12 @@ def imap(requests, prefetch=True, size=2):
     :param size: Specifies the number of requests to make at a time. default is 2
     """
 
-    pool = Pool(size)
-
     def send(r):
         r.send(prefetch)
         return r.response
 
-    for r in pool.imap_unordered(send, requests):
+    pool = GreenPool(size)
+    for r in pool.imap(send, requests):
         yield r
+    pool.waitall()
 
-    pool.join()
