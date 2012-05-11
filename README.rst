@@ -1,16 +1,17 @@
-GRequests: Asyncronous Requests
+ERequests: Asyncronous Requests
 ===============================
 
-GRequests allows you to use Requests with Gevent to make asyncronous HTTP
+ERequests allows you to use Requests with Eventlet to make asyncronous HTTP
 Requests easily.
 
+ERequests is a port to Eventlet of Kenneth Reitz's grequests (https://github.com/kennethreitz/grequests)
 
 Usage
 -----
 
 Usage is simple::
 
-    import grequests
+    import erequests
 
     urls = [
         'http://www.heroku.com',
@@ -22,17 +23,11 @@ Usage is simple::
 
 Create a set of unsent Requests::
 
-    >>> rs = (grequests.get(u) for u in urls)
+    >>> rs = (erequests.get(u) for u in urls)
 
 Send them all at the same time::
 
-    >>> grequests.map(rs)
+    >>> erequests.map(rs)
     [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>]
 
 
-Installation
-------------
-
-Installation is easy with pip::
-
-    $ pip install grequests
