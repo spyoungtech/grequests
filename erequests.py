@@ -70,7 +70,8 @@ def map(requests, prefetch=True, size=None):
     jobs = [send(r, pool, prefetch=prefetch) for r in requests]
     if pool is not None:
         pool.waitall()
-    [j.wait() for j in jobs]
+    else:
+        [j.wait() for j in jobs]
 
     return [r.response for r in requests]
 
