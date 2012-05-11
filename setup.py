@@ -1,46 +1,17 @@
 # -*- coding: utf-8 -*-
-"""
-GRequests allows you to use Requests with Gevent to make asyncronous HTTP
-Requests easily.
-
-Usage
------
-
-Usage is simple::
-
-    import grequests
-
-    urls = [
-        'http://www.heroku.com',
-        'http://tablib.org',
-        'http://httpbin.org',
-        'http://python-requests.org',
-        'http://kennethreitz.com'
-    ]
-
-Create a set of unsent Requests::
-
-    >>> rs = (grequests.get(u) for u in urls)
-
-Send them all at the same time::
-
-    >>> grequests.map(rs)
-    [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>]
-
-"""
 
 from setuptools import setup
 
 setup(
-    name='grequests',
+    name='erequests',
     version='0.1.0',
-    url='https://github.com/kennethreitz/grequests',
+    url='https://github.com/saghul/erequests',
     license='BSD',
     author='Kenneth Reitz',
     author_email='me@kennethreitz.com',
-    description='Requests + Gevent',
-    long_description=__doc__,
-    py_modules=['grequests'],
+    description='Requests + Eventlet',
+    long_description=open('README.rst', 'r').read(),
+    py_modules=['erequests'],
     zip_safe=False,
     include_package_data=True,
     platforms='any',
