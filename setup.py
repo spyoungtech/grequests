@@ -9,6 +9,8 @@ setup(
     license='BSD',
     author='Kenneth Reitz',
     author_email='me@kennethreitz.com',
+    maintainer='Saúl Ibarra Corretgé',
+    maintainer_email='saghul@gmail.com',
     description='Requests + Eventlet',
     long_description=open('README.rst', 'r').read(),
     py_modules=['erequests'],
