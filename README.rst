@@ -31,3 +31,10 @@ Send them all at the same time::
     [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>]
 
 
+Installation
+------------
+
+Installation is easy with pip::
+
+    $ pip install erequests
+
