@@ -1,2 +1,3 @@
 requests
 gevent
+nose
