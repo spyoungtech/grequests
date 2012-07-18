@@ -52,7 +52,7 @@ def send(r, pool=None, prefetch=False, exception_handler=None):
     and can hence limit concurrency."""
 
     if pool != None:
-        glget = pool.spawn(r.send, prefetch=prefetch)
+        glet = pool.spawn(r.send, prefetch=prefetch)
 
     glet = gevent.spawn(r.send, prefetch=prefetch)
 
