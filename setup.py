@@ -40,6 +40,10 @@ setup(
     author_email='me@kennethreitz.com',
     description='Requests + Gevent',
     long_description=__doc__,
+    install_requires=[
+        'gevent',
+        'requests'
+    ],
     py_modules=['grequests'],
     zip_safe=False,
     include_package_data=True,
