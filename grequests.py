@@ -28,6 +28,27 @@ __all__ = (
 )
 
 
+def _greenlet_report_error(self, exc_info):
+    exception = exc_info[1]
+    if isinstance(exception, gevent.greenlet.GreenletExit):
+        self._report_result(exception)
+        return
+    self._exception = exception
+
+    if self._links and self._notifier is None:
+        self._notifier = gevent.greenlet.core.active_event(self._notify_links)
+
+    info = str(self) + ' failed with '
+    try:
+        info += self._exception.__class__.__name__
+    except Exception:
+        info += str(self._exception) or repr(self._exception)
+
+
+## Patch the greenlet error reporting
+gevent.greenlet.Greenlet._report_error = _greenlet_report_error
+
+
 def patched(f):
     """Patches a given API function to not send."""
 
@@ -52,15 +73,19 @@ def send(r, pool=None, prefetch=False, exception_handler=None):
     and can hence limit concurrency."""
 
     if pool != None:
-        glet = pool.spawn(r.send, prefetch=prefetch)
-
-    glet = gevent.spawn(r.send, prefetch=prefetch)
+        p = pool.spawn
+    else:
+        p = gevent.spawn
 
     if exception_handler:
+        glet = p(r.send, prefetch=prefetch)
+
         def eh_wrapper(g):
             return exception_handler(r,g.exception)
 
         glet.link_exception(eh_wrapper)
+    else:
+        glet = p(r.send, prefetch=prefetch)
 
     return glet
 
