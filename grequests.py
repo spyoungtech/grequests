@@ -29,20 +29,34 @@ __all__ = (
 
 
 def _greenlet_report_error(self, exc_info):
+    import sys
+    import traceback
+
     exception = exc_info[1]
     if isinstance(exception, gevent.greenlet.GreenletExit):
         self._report_result(exception)
         return
+    exc_handler = False
+    for lnk in self._links:
+        if isinstance(lnk, gevent.greenlet.FailureSpawnedLink):
+            exc_handler = True
+            break
+    if not exc_handler:
+        try:
+            traceback.print_exception(*exc_info)
+        except:
+            pass
     self._exception = exception
-
     if self._links and self._notifier is None:
         self._notifier = gevent.greenlet.core.active_event(self._notify_links)
-
-    info = str(self) + ' failed with '
-    try:
-        info += self._exception.__class__.__name__
-    except Exception:
-        info += str(self._exception) or repr(self._exception)
+    ## Only print errors
+    if not exc_handler:
+        info = str(self) + ' failed with '
+        try:
+            info += self._exception.__class__.__name__
+        except Exception:
+            info += str(self._exception) or repr(self._exception)
+        sys.stderr.write(info + '\n\n')
 
 
 ## Patch the greenlet error reporting
