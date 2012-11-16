@@ -46,15 +46,23 @@ def patched(f):
     return wrapped
 
 
-def send(r, pool=None, prefetch=False):
+def send(r, pool=None, prefetch=False, exception_handler=None):
     """Sends the request object using the specified pool. If a pool isn't
     specified this method blocks. Pools are useful because you can specify size
     and can hence limit concurrency."""
 
     if pool != None:
-        return pool.spawn(r.send, prefetch=prefetch)
+        glet = pool.spawn(r.send, prefetch=prefetch)
 
-    return gevent.spawn(r.send, prefetch=prefetch)
+    glet = gevent.spawn(r.send, prefetch=prefetch)
+
+    if exception_handler:
+        def eh_wrapper(g):
+            return exception_handler(r,g.exception)
+
+        glet.link_exception(eh_wrapper)
+
+    return glet
 
 
 # Patched requests.api functions.
@@ -68,7 +76,7 @@ delete = patched(api.delete)
 request = patched(api.request)
 
 
-def map(requests, prefetch=True, size=None):
+def map(requests, prefetch=True, size=None, exception_handler=None):
     """Concurrently converts a list of Requests to Responses.
 
     :param requests: a collection of Request objects.
@@ -79,13 +87,13 @@ def map(requests, prefetch=True, size=None):
     requests = list(requests)
 
     pool = Pool(size) if size else None
-    jobs = [send(r, pool, prefetch=prefetch) for r in requests]
+    jobs = [send(r, pool, prefetch=prefetch, exception_handler=exception_handler) for r in requests]
     gevent.joinall(jobs)
 
     return [r.response for r in requests]
 
 
-def imap(requests, prefetch=True, size=2):
+def imap(requests, prefetch=True, size=2, exception_handler=None):
     """Concurrently converts a generator object of Requests to
     a generator of Responses.
 
@@ -97,7 +105,7 @@ def imap(requests, prefetch=True, size=2):
     pool = Pool(size)
 
     def send(r):
-        r.send(prefetch)
+        r.send(prefetch,exception_handler=exception_handler)
         return r.response
 
     for r in pool.imap_unordered(send, requests):
