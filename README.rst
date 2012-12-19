@@ -14,7 +14,7 @@ Usage is simple::
 
     urls = [
         'http://www.heroku.com',
-        'http://tablib.org',
+        'http://python-tablib.org',
         'http://httpbin.org',
         'http://python-requests.org',
         'http://kennethreitz.com'
