@@ -33,8 +33,7 @@ def patched(f):
 
     def wrapped(*args, **kwargs):
 
-        kwargs['return_response'] = False
-        kwargs['prefetch'] = True
+        kwargs['stream'] = True
 
         config = kwargs.get('config', {})
         config.update(safe_mode=True)
@@ -46,15 +45,15 @@ def patched(f):
     return wrapped
 
 
-def send(r, pool=None, prefetch=False):
+def send(r, pool=None, stream=False):
     """Sends the request object using the specified pool. If a pool isn't
     specified this method blocks. Pools are useful because you can specify size
     and can hence limit concurrency."""
 
-    if pool != None:
-        return pool.spawn(r.send, prefetch=prefetch)
+    if pool is not None:
+        return pool.spawn(r.send, stream=stream)
 
-    return gevent.spawn(r.send, prefetch=prefetch)
+    return gevent.spawn(r.send, stream=stream)
 
 
 # Patched requests.api functions.
@@ -68,36 +67,37 @@ delete = patched(api.delete)
 request = patched(api.request)
 
 
-def map(requests, prefetch=True, size=None):
+def map(requests, stream=True, size=None):
     """Concurrently converts a list of Requests to Responses.
 
     :param requests: a collection of Request objects.
-    :param prefetch: If False, the content will not be downloaded immediately.
-    :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
+    :param stream: If False, the content will not be downloaded immediately.
+    :param size: Specifies the number of requests to make at a time. If None,
+        no throttling occurs.
     """
 
     requests = list(requests)
 
     pool = Pool(size) if size else None
-    jobs = [send(r, pool, prefetch=prefetch) for r in requests]
+    jobs = [send(r, pool, stream=stream) for r in requests]
     gevent.joinall(jobs)
 
     return [r.response for r in requests]
 
 
-def imap(requests, prefetch=True, size=2):
+def imap(requests, stream=True, size=2):
     """Concurrently converts a generator object of Requests to
     a generator of Responses.
 
     :param requests: a generator of Request objects.
-    :param prefetch: If False, the content will not be downloaded immediately.
+    :param stream: If False, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. default is 2
     """
 
     pool = Pool(size)
 
     def send(r):
-        r.send(prefetch)
+        r.send(stream)
         return r.response
 
     for r in pool.imap_unordered(send, requests):
