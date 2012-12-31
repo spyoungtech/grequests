@@ -34,12 +34,6 @@ def patched(f):
     def wrapped(*args, **kwargs):
 
         kwargs['stream'] = True
-
-        config = kwargs.get('config', {})
-        config.update(safe_mode=True)
-
-        kwargs['config'] = config
-
         return f(*args, **kwargs)
 
     return wrapped
@@ -91,7 +85,8 @@ def imap(requests, stream=True, size=2):
 
     :param requests: a generator of Request objects.
     :param stream: If False, the content will not be downloaded immediately.
-    :param size: Specifies the number of requests to make at a time. default is 2
+    :param size: Specifies the number of requests to make at a time. default
+        is 2
     """
 
     pool = Pool(size)
