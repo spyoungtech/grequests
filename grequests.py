@@ -19,7 +19,8 @@ except ImportError:
 # Monkey-patch.
 curious_george.patch_all(thread=False, select=False)
 
-from requests import api
+from requests import api, adapters
+http_adapter = adapters.HTTPAdapter()
 
 
 __all__ = (
@@ -45,9 +46,9 @@ def send(r, pool=None, stream=False):
     and can hence limit concurrency."""
 
     if pool is not None:
-        return pool.spawn(r.send, stream=stream)
+        return pool.spawn(http_adapter.send, r, stream=stream)
 
-    return gevent.spawn(r.send, stream=stream)
+    return gevent.spawn(http_adapter.send, r, stream=stream)
 
 
 # Patched requests.api functions.
@@ -76,7 +77,7 @@ def map(requests, stream=True, size=None):
     jobs = [send(r, pool, stream=stream) for r in requests]
     gevent.joinall(jobs)
 
-    return [r.response for r in requests]
+    return [g.value for g in jobs]
 
 
 def imap(requests, stream=True, size=2):
@@ -92,8 +93,8 @@ def imap(requests, stream=True, size=2):
     pool = Pool(size)
 
     def send(r):
-        r.send(stream)
-        return r.response
+        response = http_adapter.send(r, stream=stream)
+        return response
 
     for r in pool.imap_unordered(send, requests):
         yield r
