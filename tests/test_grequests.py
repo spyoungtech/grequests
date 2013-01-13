@@ -4,6 +4,7 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('..'))
 
+import time
 import unittest
 
 import requests
@@ -88,6 +89,13 @@ class GrequestsCase(unittest.TestCase):
         r = grequests.map([grequests.get(httpbin('stream/10'))],
                           size=2, stream=True)[0]
         self.assertFalse(r._content_consumed)
+
+    def test_concurrency_with_delayed_url(self):
+        t = time.time()
+        n = 10
+        reqs = [grequests.get(httpbin('delay/1')) for _ in range(n)]
+        resp = grequests.map(reqs, size=n)
+        self.assertLess((time.time() - t), n)
 
     def get(self, url, **kwargs):
         return grequests.map([grequests.get(url, **kwargs)])[0]
