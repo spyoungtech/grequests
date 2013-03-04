@@ -33,7 +33,7 @@ from setuptools import setup
 
 setup(
     name='grequests',
-    version='0.1.0',
+    version='0.2.0',
     url='https://github.com/kennethreitz/grequests',
     license='BSD',
     author='Kenneth Reitz',
@@ -42,7 +42,7 @@ setup(
     long_description=__doc__,
     install_requires=[
         'gevent',
-        'requests'
+        'requests>=1.0.0'
     ],
     py_modules=['grequests'],
     zip_safe=False,
