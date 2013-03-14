@@ -13,6 +13,7 @@ setup(
     maintainer_email='saghul@gmail.com',
     description='Requests + Eventlet',
     long_description=open('README.rst', 'r').read(),
+    install_requires=['eventlet', 'requests'],
     py_modules=['erequests'],
     zip_safe=False,
     include_package_data=True,
