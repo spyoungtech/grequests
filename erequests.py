@@ -12,12 +12,10 @@ by eventlet. All API methods return a ``Request`` instance (as opposed to
 from functools import partial
 
 import eventlet
-from eventlet.greenpool import GreenPool
 
 # Monkey-patch.
-eventlet.monkey_patch(os=True, socket=True, time=True)
+requests = eventlet.patcher.import_patched('requests')
 
-from requests import Session
 
 __all__ = (
     'map', 'imap',
@@ -41,7 +39,7 @@ class AsyncRequest(object):
         #: Associated ``Session``
         self.session = kwargs.pop('session', None)
         if self.session is None:
-            self.session = Session()
+            self.session = requests.Session()
 
         callback = kwargs.pop('callback', None)
         if callback:
