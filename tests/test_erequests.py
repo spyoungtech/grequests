@@ -8,8 +8,8 @@ sys.path.insert(0, os.path.abspath('..'))
 import time
 import unittest
 
-import requests
 import erequests
+
 
 HTTPBIN_URL = os.environ.get('HTTPBIN_URL', 'http://httpbin.org/')
 
@@ -39,7 +39,7 @@ class GrequestsCase(unittest.TestCase):
     def test_hooks(self):
         result = {}
 
-        def hook(r):
+        def hook(r, **kwargs):
             result[r.url] = True
             return r
 
@@ -50,7 +50,7 @@ class GrequestsCase(unittest.TestCase):
     def test_callback_kwarg(self):
         result = {'ok': False}
 
-        def callback(r):
+        def callback(r, **kwargs):
             result['ok'] = True
             return r
 
@@ -61,7 +61,7 @@ class GrequestsCase(unittest.TestCase):
         c1 = {'k1': 'v1'}
         r = self.get(httpbin('cookies/set'), params=c1).json()
         self.assertEqual(r['cookies'], c1)
-        s = requests.Session()
+        s = erequests.Session()
         r = self.get(httpbin('cookies/set'), session=s, params=c1).json()
         self.assertEqual(dict(s.cookies), c1)
 
