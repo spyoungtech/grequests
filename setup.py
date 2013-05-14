@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name                 = 'erequests',
-    version              = '0.2.1',
+    version              = '0.3.0',
     url                  = 'https://github.com/saghul/erequests',
     license              = 'BSD',
     author               = 'Kenneth Reitz',
@@ -18,7 +18,7 @@ setup(
     zip_safe             = False,
     include_package_data = True,
     platforms            = 'any',
-    classifiers          =[
+    classifiers          = [
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
