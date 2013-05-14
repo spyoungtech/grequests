@@ -12,15 +12,19 @@ by eventlet. All API methods return a ``Request`` instance (as opposed to
 from functools import partial
 
 import eventlet
+from eventlet import patcher
+from eventlet.greenpool import GreenPool
 
 # Monkey-patch.
-requests = eventlet.patcher.import_patched('requests')
+requests = patcher.import_patched('requests')
 
+__all__ = ['map', 'imap', 'get', 'options', 'head', 'post', 'put', 'patch', 'delete', 'request']
 
-__all__ = (
-    'map', 'imap',
-    'get', 'options', 'head', 'post', 'put', 'patch', 'delete', 'request'
-)
+# Export same items as vanilla requests
+__requests_imports__ = ['utils', 'session', 'Session', 'codes', 'RequestException', 'Timeout', 'URLRequired', 'TooManyRedirects', 'HTTPError', 'ConnectionError']
+patcher.slurp_properties(requests, globals(), srckeys=__requests_imports__)
+__all__.extend(__requests_imports__)
+del requests, patcher, __requests_imports__
 
 
 class AsyncRequest(object):
@@ -39,7 +43,7 @@ class AsyncRequest(object):
         #: Associated ``Session``
         self.session = kwargs.pop('session', None)
         if self.session is None:
-            self.session = requests.Session()
+            self.session = Session()
 
         callback = kwargs.pop('callback', None)
         if callback:
