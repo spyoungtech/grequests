@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-GRequests allows you to use Requests with Gevent to make asyncronous HTTP
+GRequests allows you to use Requests with Gevent to make asynchronous HTTP
 Requests easily.
 
 Usage
