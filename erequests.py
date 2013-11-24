@@ -9,22 +9,18 @@ by eventlet. All API methods return a ``Request`` instance (as opposed to
 ``Response``). A list of requests can be sent with ``map()``.
 """
 
-from functools import partial
-
 import eventlet
-from eventlet import patcher
-from eventlet.greenpool import GreenPool
 
 # Monkey-patch.
-requests = patcher.import_patched('requests')
+requests = eventlet.patcher.import_patched('requests')
 
 __all__ = ['map', 'imap', 'get', 'options', 'head', 'post', 'put', 'patch', 'delete', 'request']
 
 # Export same items as vanilla requests
 __requests_imports__ = ['utils', 'session', 'Session', 'codes', 'RequestException', 'Timeout', 'URLRequired', 'TooManyRedirects', 'HTTPError', 'ConnectionError']
-patcher.slurp_properties(requests, globals(), srckeys=__requests_imports__)
+eventlet.patcher.slurp_properties(requests, globals(), srckeys=__requests_imports__)
 __all__.extend(__requests_imports__)
-del requests, patcher, __requests_imports__
+del requests, __requests_imports__
 
 
 class AsyncRequest(object):
@@ -35,96 +31,98 @@ class AsyncRequest(object):
     :param session: Session which will do request
     :param callback: Callback called on response. Same as passing ``hooks={'response': callback}``
     """
-    def __init__(self, method, url, **kwargs):
-        #: Request method
+    def __init__(self, method, url, session=None):
         self.method = method
-        #: URL to request
         self.url = url
-        #: Associated ``Session``
-        self.session = kwargs.pop('session', None)
-        if self.session is None:
-            self.session = Session()
-
-        callback = kwargs.pop('callback', None)
-        if callback:
-            kwargs['hooks'] = {'response': callback}
-
-        #: The rest arguments for ``Session.request``
-        self.kwargs = kwargs
-        #: Resulting ``Response``
+        self.session = session or Session()
         self.response = None
+        self._prepared_kwargs = None
+
+    def prepare(self, **kwargs):
+        assert self._prepared_kwargs is None, 'cannot call prepare multiple times'
+        self._prepared_kwargs = kwargs
 
     def send(self, **kwargs):
-        """
-        Prepares request based on parameter passed to constructor and optional ``kwargs```.
-        Then sends request and saves response to :attr:`response`
-
-        :returns: ``Response``
-        """
-        merged_kwargs = {}
-        merged_kwargs.update(self.kwargs)
-        merged_kwargs.update(kwargs)
-        self.response = self.session.request(self.method, self.url, **merged_kwargs)
+        kw = self._prepared_kwargs or {}
+        kw.update(kwargs)
+        self.response = self.session.request(self.method, self.url, **kw)
         return self.response
 
 
-def send(r, pool=None, stream=False):
-    """Sends the request object using the specified pool. If a pool isn't
-    specified this method blocks. Pools are useful because you can specify size
-    and can hence limit concurrency."""
-    if pool is not None:
-        return pool.spawn(r.send, stream=stream)
-    return eventlet.spawn(r.send, stream=stream)
-
-
-# Shortcuts for creating AsyncRequest with appropriate HTTP method
-get = partial(AsyncRequest, 'GET')
-options = partial(AsyncRequest, 'OPTIONS')
-head = partial(AsyncRequest, 'HEAD')
-post = partial(AsyncRequest, 'POST')
-put = partial(AsyncRequest, 'PUT')
-patch = partial(AsyncRequest, 'PATCH')
-delete = partial(AsyncRequest, 'DELETE')
-
-
-# synonym
 def request(method, url, **kwargs):
-    return AsyncRequest(method, url, **kwargs)
+    req = AsyncRequest(method, url)
+    return eventlet.spawn(req.send, **kwargs).wait()
 
 
-def map(requests, stream=False, size=None):
+def get(url, **kwargs):
+    kwargs.setdefault('allow_redirects', True)
+    return request('GET', url, **kwargs)
+
+
+def options(url, **kwargs):
+    kwargs.setdefault('allow_redirects', True)
+    return request('OPTIONS', url, **kwargs)
+
+
+def head(url, **kwargs):
+    kwargs.setdefault('allow_redirects', False)
+    return request('HEAD', url, **kwargs)
+
+
+def post(url, data=None, **kwargs):
+    return request('POST', url, data=data, **kwargs)
+
+
+def put(url, data=None, **kwargs):
+    return request('PUT', url, data=data, **kwargs)
+
+
+def patch(url, data=None, **kwargs):
+    return request('PATCH', url, data=data, **kwargs)
+
+
+def delete(url, **kwargs):
+    return request('DELETE', url, **kwargs)
+
+
+def map(requests, size=10):
     """Concurrently converts a list of Requests to Responses.
 
     :param requests: a collection of Request objects.
-    :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
     """
 
-    requests = list(requests)
+    results = []
 
-    pool = GreenPool(size) if size else None
-    jobs = [send(r, pool, stream=stream) for r in requests]
-    if pool is not None:
-        pool.waitall()
-    else:
-        [j.wait() for j in jobs]
+    def send(r):
+        try:
+            results.append(r.send())
+        except Exception as e:
+            results.append(e)
 
-    return [r.response for r in requests]
+    pool = eventlet.GreenPool(size)
+    for r in requests:
+        pool.spawn(send, r)
+    pool.waitall()
+
+    return results
 
 
-def imap(requests, stream=False, size=2):
+def imap(requests, size=10):
     """Concurrently converts a generator object of Requests to
     a generator of Responses.
 
     :param requests: a generator of Request objects.
-    :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. default is 2
     """
 
-    pool = GreenPool(size)
+    pool = eventlet.GreenPool(size)
 
     def send(r):
-        return r.send(stream=stream)
+        try:
+            return r.send()
+        except Exception as e:
+            return e
 
     for r in pool.imap(send, requests):
         yield r
