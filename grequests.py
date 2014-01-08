@@ -113,13 +113,13 @@ def map(requests, stream=False, size=None):
     return [r.response for r in requests]
 
 
-def imap(requests, stream=False, size=2):
+def imap(requests, stream=False, size=None):
     """Concurrently converts a generator object of Requests to
     a generator of Responses.
 
     :param requests: a generator of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
-    :param size: Specifies the number of requests to make at a time. default is 2
+    :param size: Specifies the number of requests to make at a time. default is None (infinite)
     """
 
     pool = Pool(size)
