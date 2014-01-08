@@ -38,7 +38,7 @@ class GrequestsCase(unittest.TestCase):
     def test_hooks(self):
         result = {}
 
-        def hook(r):
+        def hook(r, **kwargs):
             result[r.url] = True
             return r
 
@@ -49,7 +49,7 @@ class GrequestsCase(unittest.TestCase):
     def test_callback_kwarg(self):
         result = {'ok': False}
 
-        def callback(r):
+        def callback(r, **kwargs):
             result['ok'] = True
             return r
 
