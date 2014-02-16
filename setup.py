@@ -44,6 +44,8 @@ setup(
         'gevent',
         'requests'
     ],
+    tests_require = ['nose'],
+    test_suite = 'nose.collector',
     py_modules=['grequests'],
     zip_safe=False,
     include_package_data=True,
