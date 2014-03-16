@@ -67,9 +67,12 @@ class AsyncRequest(object):
         merged_kwargs = {}
         merged_kwargs.update(self.kwargs)
         merged_kwargs.update(kwargs)
-        self.response =  self.session.request(self.method,
-                                              self.url, **merged_kwargs)
-        return self.response
+        try:
+            self.response =  self.session.request(self.method,
+                                                self.url, **merged_kwargs)
+        except Exception as e:
+            self.exception = e
+        return self
 
 
 def send(r, pool=None, stream=False):
@@ -96,12 +99,13 @@ def request(method, url, **kwargs):
     return AsyncRequest(method, url, **kwargs)
 
 
-def map(requests, stream=False, size=None):
+def map(requests, stream=False, size=None, exception_handler=None):
     """Concurrently converts a list of Requests to Responses.
 
     :param requests: a collection of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
+    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
     """
 
     requests = list(requests)
@@ -110,16 +114,25 @@ def map(requests, stream=False, size=None):
     jobs = [send(r, pool, stream=stream) for r in requests]
     gevent.joinall(jobs)
 
-    return [r.response for r in requests]
+    ret = []
+
+    for request in requests:
+        if request.response:
+            ret.append(request.response)
+        elif exception_handler:
+            exception_handler(request, request.exception)
+
+    return ret
 
 
-def imap(requests, stream=False, size=2):
+def imap(requests, stream=False, size=2, exception_handler=None):
     """Concurrently converts a generator object of Requests to
     a generator of Responses.
 
     :param requests: a generator of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. default is 2
+    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
     """
 
     pool = Pool(size)
@@ -127,7 +140,10 @@ def imap(requests, stream=False, size=2):
     def send(r):
         return r.send(stream=stream)
 
-    for r in pool.imap_unordered(send, requests):
-        yield r
+    for request in pool.imap_unordered(send, requests):
+        if request.response:
+            yield request.response
+        elif exception_handler:
+            exception_handler(request, request.exception)
 
     pool.join()
