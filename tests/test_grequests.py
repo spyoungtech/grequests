@@ -43,7 +43,7 @@ class GrequestsCase(unittest.TestCase):
             return r
 
         reqs = [grequests.get(url, hooks={'response': [hook]}) for url in URLS]
-        resp = grequests.map(reqs, size=N)
+        grequests.map(reqs, size=N)
         self.assertEqual(sorted(result.keys()), sorted(URLS))
 
     def test_callback_kwarg(self):
@@ -94,8 +94,42 @@ class GrequestsCase(unittest.TestCase):
         t = time.time()
         n = 10
         reqs = [grequests.get(httpbin('delay/1')) for _ in range(n)]
-        resp = grequests.map(reqs, size=n)
+        grequests.map(reqs, size=n)
         self.assertLess((time.time() - t), n)
+
+    def test_map_timeout(self):
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
+        responses = grequests.map(reqs)
+        self.assertEqual(len(responses), 1)
+
+    def test_imap_timeout(self):
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
+        responses = list(grequests.imap(reqs))
+        self.assertEqual(len(responses), 1)
+
+    def test_map_timeout_exception(self):
+        class ExceptionHandler:
+            def __init__(self):
+                self.counter = 0
+
+            def callback(self, request, exception):
+                 self.counter += 1
+        eh = ExceptionHandler()
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
+        list(grequests.map(reqs, exception_handler=eh.callback))
+        self.assertEqual(eh.counter, 1)
+
+    def test_imap_timeout_exception(self):
+        class ExceptionHandler:
+            def __init__(self):
+                self.counter = 0
+
+            def callback(self, request, exception):
+                 self.counter += 1
+        eh = ExceptionHandler()
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
+        list(grequests.imap(reqs, exception_handler=eh.callback))
+        self.assertEqual(eh.counter, 1)
 
     def get(self, url, **kwargs):
         return grequests.map([grequests.get(url, **kwargs)])[0]
