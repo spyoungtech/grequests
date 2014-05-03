@@ -23,6 +23,10 @@ curious_george.patch_all(thread=False, select=False)
 from requests import Session
 
 
+# Global Variable
+is_using_requesocks = False
+
+
 __all__ = (
     'map', 'imap',
     'get', 'options', 'head', 'post', 'put', 'patch', 'delete', 'request'
@@ -67,8 +71,19 @@ class AsyncRequest(object):
         merged_kwargs = {}
         merged_kwargs.update(self.kwargs)
         merged_kwargs.update(kwargs)
-        self.response =  self.session.request(self.method,
-                                              self.url, **merged_kwargs)
+        if is_using_requesocks:
+            stream = merged_kwargs.pop('stream', default=False)
+            merged_kwargs['prefetch'] = stream
+        # Get (exception, *args, **kwargs) tuple if the request went wrong for exception handling.
+        try:
+            self.response = self.session.request(self.method,
+                                                 self.url, **merged_kwargs)
+        except Exception as error:
+            self.response = error, (self.method, self.url), merged_kwargs
+            if ('hooks' in merged_kwargs) and ('response' in merged_kwargs['hooks']):
+                callback = merged_kwargs['hooks']['response']
+                callback(error, self.method, self.url, **merged_kwargs)
+
         return self.response
 
 
@@ -76,7 +91,7 @@ def send(r, pool=None, stream=False):
     """Sends the request object using the specified pool. If a pool isn't
     specified this method blocks. Pools are useful because you can specify size
     and can hence limit concurrency."""
-    if pool != None:
+    if pool is not None:
         return pool.spawn(r.send, stream=stream)
 
     return gevent.spawn(r.send, stream=stream)
@@ -90,6 +105,7 @@ post = partial(AsyncRequest, 'POST')
 put = partial(AsyncRequest, 'PUT')
 patch = partial(AsyncRequest, 'PATCH')
 delete = partial(AsyncRequest, 'DELETE')
+
 
 # synonym
 def request(method, url, **kwargs):
@@ -131,3 +147,11 @@ def imap(requests, stream=False, size=2):
         yield r
 
     pool.join()
+
+
+def use_requesocks():
+    """Patching grequests to use requesocks."""
+    global is_using_requesocks, Session
+    import requesocks
+    Session = requesocks.Session
+    is_using_requesocks = True
