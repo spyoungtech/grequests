@@ -96,19 +96,22 @@ def request(method, url, **kwargs):
     return AsyncRequest(method, url, **kwargs)
 
 
-def map(requests, stream=False, size=None):
+def map(requests, stream=False, size=None, **kw):
     """Concurrently converts a list of Requests to Responses.
 
     :param requests: a collection of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
+    :param timeout: Passed to gevent.joinall(). If specified, defines timeout to join greenlets
+    :param raise_error: Passed to gevent.joinall(). Unless True, errors are quietly ignored
+    :param count: Passed to gevent.joinall(). Return only first `count` results
     """
 
     requests = list(requests)
 
     pool = Pool(size) if size else None
     jobs = [send(r, pool, stream=stream) for r in requests]
-    gevent.joinall(jobs)
+    gevent.joinall(jobs, **kw)
 
     return [r.response for r in requests]
 
