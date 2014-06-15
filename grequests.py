@@ -117,10 +117,11 @@ def map(requests, stream=False, size=None, exception_handler=None):
     ret = []
 
     for request in requests:
-        if request.response:
+        if request.response is not None:
             ret.append(request.response)
         elif exception_handler:
             exception_handler(request, request.exception)
+            ret.append(None)
 
     return ret
 
@@ -141,9 +142,10 @@ def imap(requests, stream=False, size=2, exception_handler=None):
         return r.send(stream=stream)
 
     for request in pool.imap_unordered(send, requests):
-        if request.response:
+        if request.response is not None:
             yield request.response
         elif exception_handler:
             exception_handler(request, request.exception)
+            yield None
 
     pool.join()
