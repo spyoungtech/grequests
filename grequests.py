@@ -9,7 +9,7 @@ by gevent. All API methods return a ``Request`` instance (as opposed to
 ``Response``). A list of requests can be sent with ``map()``.
 """
 from functools import partial
-
+import traceback
 try:
     import gevent
     from gevent import monkey as curious_george
@@ -72,6 +72,7 @@ class AsyncRequest(object):
                                                 self.url, **merged_kwargs)
         except Exception as e:
             self.exception = e
+            self.traceback = traceback.format_exc()
         return self
 
 
