@@ -153,6 +153,12 @@ class GrequestsCase(unittest.TestCase):
         list(grequests.imap(reqs, exception_handler=eh.callback))
         self.assertEqual(eh.counter, 1)
 
+    def test_map_inputs_match_outputs_with_exception(self):
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
+        res = grequests.map(reqs)
+        self.assertEquals(len(reqs), len(res))
+        self.assertEquals(res, [None])
+
     def get(self, url, **kwargs):
         return grequests.map([grequests.get(url, **kwargs)])[0]
 
