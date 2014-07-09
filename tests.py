@@ -30,6 +30,7 @@ import time
 import unittest
 
 import requests
+from requests.exceptions import Timeout
 import grequests
 
 HTTPBIN_URL = os.environ.get('HTTPBIN_URL', 'http://httpbin.org/')
@@ -123,6 +124,7 @@ class GrequestsCase(unittest.TestCase):
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
         responses = grequests.map(reqs)
         self.assertEqual(len(responses), 2)
+        self.assertIsNone(responses[0])
 
     def test_map_timeout_exception_handler_returns_false(self):
         def exception_handler(request, exception):
@@ -137,6 +139,7 @@ class GrequestsCase(unittest.TestCase):
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
         responses = grequests.map(reqs, exception_handler=exception_handler)
         self.assertEqual(len(responses), 2)
+        self.assertIsNone(responses[0])
 
     def test_map_timeout_exception_handler_returns_exception(self):
         def exception_handler(request, exception):
@@ -144,6 +147,7 @@ class GrequestsCase(unittest.TestCase):
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
         responses = grequests.map(reqs, exception_handler=exception_handler)
         self.assertEqual(len(responses), 2)
+        self.assertIsInstance(responses[0], Timeout)
 
     def test_imap_timeout(self):
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
