@@ -119,10 +119,31 @@ class GrequestsCase(unittest.TestCase):
         grequests.map(reqs, size=n)
         self.assertLess((time.time() - t), n)
 
-    def test_map_timeout(self):
+    def test_map_timeout_no_exception_handler(self):
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
         responses = grequests.map(reqs)
+        self.assertEqual(len(responses), 2)
+
+    def test_map_timeout_exception_handler_returns_false(self):
+        def exception_handler(request, exception):
+            return False
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
+        responses = grequests.map(reqs, exception_handler=exception_handler)
         self.assertEqual(len(responses), 1)
+
+    def test_map_timeout_exception_handler_no_return(self):
+        def exception_handler(request, exception):
+            pass
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
+        responses = grequests.map(reqs, exception_handler=exception_handler)
+        self.assertEqual(len(responses), 2)
+
+    def test_map_timeout_exception_handler_returns_exception(self):
+        def exception_handler(request, exception):
+            return exception
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
+        responses = grequests.map(reqs, exception_handler=exception_handler)
+        self.assertEqual(len(responses), 2)
 
     def test_imap_timeout(self):
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
@@ -152,12 +173,6 @@ class GrequestsCase(unittest.TestCase):
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
         list(grequests.imap(reqs, exception_handler=eh.callback))
         self.assertEqual(eh.counter, 1)
-
-    def test_map_inputs_match_outputs_with_exception(self):
-        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
-        res = grequests.map(reqs)
-        self.assertEquals(len(reqs), len(res))
-        self.assertEquals(res, [None])
 
     def get(self, url, **kwargs):
         return grequests.map([grequests.get(url, **kwargs)])[0]

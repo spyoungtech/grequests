@@ -121,7 +121,11 @@ def map(requests, stream=False, size=None, exception_handler=None):
         if request.response is not None:
             ret.append(request.response)
         elif exception_handler:
-            exception_handler(request, request.exception)
+            rv = exception_handler(request, request.exception)
+            if rv is not False:
+                ret.append(rv)
+        else:
+            ret.append(None)
 
     return ret
 

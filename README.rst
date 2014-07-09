@@ -35,6 +35,7 @@ exception inside the main thread::
 
     >>> def exception_handler(request, exception):
     ...    print "Request failed"
+    ...    return False
 
     >>> reqs = [
     ...    grequests.get('http://httpbin.org/delay/1', timeout=0.001),
