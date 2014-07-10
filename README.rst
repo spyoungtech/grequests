@@ -17,6 +17,7 @@ Usage is simple::
         'http://python-tablib.org',
         'http://httpbin.org',
         'http://python-requests.org',
+        'http://fakedomain/',
         'http://kennethreitz.com'
     ]
 
@@ -27,7 +28,7 @@ Create a set of unsent Requests::
 Send them all at the same time::
 
     >>> grequests.map(rs)
-    [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>]
+    [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, None, <Response [200]>]
 
 Optionally, in the event of a timeout or any other exception during the connection of
 the request, you can add an exception handler that will be called with the request and
@@ -35,7 +36,6 @@ exception inside the main thread::
 
     >>> def exception_handler(request, exception):
     ...    print "Request failed"
-    ...    return False
 
     >>> reqs = [
     ...    grequests.get('http://httpbin.org/delay/1', timeout=0.001),
@@ -44,7 +44,7 @@ exception inside the main thread::
     >>> grequests.map(reqs, exception_handler=exception_handler)
     Request failed
     Request failed
-    [<Response [500]>]
+    [None, None, <Response [500]>]
 
 
 Installation
