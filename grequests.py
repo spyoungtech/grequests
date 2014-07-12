@@ -68,8 +68,8 @@ class AsyncRequest(object):
         merged_kwargs.update(self.kwargs)
         merged_kwargs.update(kwargs)
         try:
-            self.response =  self.session.request(self.method,
-                                                self.url, **merged_kwargs)
+            self.response = self.session.request(self.method,
+                                                 self.url, **merged_kwargs)
         except Exception as e:
             self.exception = e
         return self
@@ -79,7 +79,7 @@ def send(r, pool=None, stream=False):
     """Sends the request object using the specified pool. If a pool isn't
     specified this method blocks. Pools are useful because you can specify size
     and can hence limit concurrency."""
-    if pool != None:
+    if pool:
         return pool.spawn(r.send, stream=stream)
 
     return gevent.spawn(r.send, stream=stream)
@@ -93,6 +93,7 @@ post = partial(AsyncRequest, 'POST')
 put = partial(AsyncRequest, 'PUT')
 patch = partial(AsyncRequest, 'PATCH')
 delete = partial(AsyncRequest, 'DELETE')
+
 
 # synonym
 def request(method, url, **kwargs):
@@ -119,7 +120,7 @@ def map(requests, stream=False, size=None, exception_handler=None):
     for request in requests:
         if request.response:
             ret.append(request.response)
-        elif exception_handler:
+        elif exception_handler and hasattr(request, 'exception'):
             exception_handler(request, request.exception)
 
     return ret
