@@ -51,6 +51,8 @@ class AsyncRequest(object):
         callback = kwargs.pop('callback', None)
         if callback:
             kwargs['hooks'] = {'response': callback}
+ 
+        self.context = kwargs.pop('context', None)
 
         #: The rest arguments for ``Session.request``
         self.kwargs = kwargs
@@ -93,6 +95,7 @@ post = partial(AsyncRequest, 'POST')
 put = partial(AsyncRequest, 'PUT')
 patch = partial(AsyncRequest, 'PATCH')
 delete = partial(AsyncRequest, 'DELETE')
+context = partial(AsyncRequest, 'GET')
 
 # synonym
 def request(method, url, **kwargs):
@@ -118,7 +121,10 @@ def map(requests, stream=False, size=None, exception_handler=None):
 
     for request in requests:
         if request.response:
-            ret.append(request.response)
+            if request.context:
+                ret.append( (request.response, request.context) )
+            else:
+                ret.append(request.response)
         elif exception_handler:
             exception_handler(request, request.exception)
 

@@ -29,22 +29,21 @@ Send them all at the same time::
     >>> grequests.map(rs)
     [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>]
 
-Optionally, in the event of a timeout or any other exception during the connection of
-the request, you can add an exception handler that will be called with the request and
-exception inside the main thread::
+If you want to add context to a call::
 
-    >>> def exception_handler(request, exception):
-    ...    print "Request failed"
+    import grequests
 
-    >>> reqs = [
-    ...    grequests.get('http://httpbin.org/delay/1', timeout=0.001),
-    ...    grequests.get('http://fakedomain/'),
-    ...    grequests.get('http://httpbin.org/status/500')]
-    >>> grequests.map(reqs, exception_handler=exception_handler)
-    Request failed
-    Request failed
-    [<Response [500]>]
+    urls = {
+        'http://www.heroku.com': 'heroku',
+        'http://python-tablib.org': 'python',
+        'http://httpbin.org': 'httpbin',
+        'http://www.google.com': 'google'
+    }
 
+    rs = (grequests.context(k, context=v) for k,v in urls.iteritems())
+    grequests.map(rs)
+
+    [(<Response [200]>, 'google'), (<Response [200]>, 'heroku'), (<Response [200]>, 'python'), (<Response [200]>, 'httpbin')]
 
 Installation
 ------------
