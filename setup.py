@@ -33,11 +33,13 @@ from setuptools import setup
 
 setup(
     name='grequests',
-    version='0.1.0',
-    url='https://github.com/kennethreitz/grequests',
+    version='0.1.1',
+    url='https://github.com/9b/grequests',
     license='BSD',
     author='Kenneth Reitz',
     author_email='me@kennethreitz.com',
+    modifier='Brandon Dixon',
+    modifier_email='brandon@9bplus.com',
     description='Requests + Gevent',
     long_description=__doc__,
     install_requires=[
