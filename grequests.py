@@ -79,7 +79,7 @@ def send(r, pool=None, stream=False):
     """Sends the request object using the specified pool. If a pool isn't
     specified this method blocks. Pools are useful because you can specify size
     and can hence limit concurrency."""
-    if pool != None:
+    if pool is not None:
         return pool.spawn(r.send, stream=stream)
 
     return gevent.spawn(r.send, stream=stream)
