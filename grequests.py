@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 
 """
 grequests
@@ -7,6 +8,21 @@ grequests
 This module contains an asynchronous replica of ``requests.api``, powered
 by gevent. All API methods return a ``Request`` instance (as opposed to
 ``Response``). A list of requests can be sent with ``map()``.
+
+VENKAT: The current version of the grequests in pypi is 0.2.0
+But, there is a fix(Handles failed requests) available at
+https://github.com/kennethreitz/grequests/blob/master/grequests.py
+and also, I have refactored it a bit to maintain the meta data
+across the operations. So, we can use it to retry it upon failures
+
+Change log:
+    Method: __init__
+        ..
+        self.meta_data =  meta_data
+        self.exception = None
+        ..
+
+
 """
 from functools import partial
 
@@ -38,7 +54,7 @@ class AsyncRequest(object):
     :param callback: Callback called on response.
                      Same as passing ``hooks={'response': callback}``
     """
-    def __init__(self, method, url, **kwargs):
+    def __init__(self, method, url, meta_data=None, **kwargs):
         #: Request method
         self.method = method
         #: URL to request
@@ -56,6 +72,8 @@ class AsyncRequest(object):
         self.kwargs = kwargs
         #: Resulting ``Response``
         self.response = None
+        self.meta_data = meta_data
+        self.exception = None
 
     def send(self, **kwargs):
         """
@@ -68,7 +86,7 @@ class AsyncRequest(object):
         merged_kwargs.update(self.kwargs)
         merged_kwargs.update(kwargs)
         try:
-            self.response =  self.session.request(self.method,
+            self.response = self.session.request(self.method,
                                                 self.url, **merged_kwargs)
         except Exception as e:
             self.exception = e

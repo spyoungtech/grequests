@@ -12,3 +12,5 @@ grequests.egg-info/
 *.py[cx]
 *.swp
 env/
+
+.idea/*
