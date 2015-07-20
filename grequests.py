@@ -120,7 +120,7 @@ def map(requests, stream=False, size=None, exception_handler=None):
         if request.response:
             ret.append(request.response)
         elif exception_handler:
-            exception_handler(request, request.exception)
+            exception_handler(request, getattr(request, 'exception', None))
 
     return ret
 
@@ -132,7 +132,7 @@ def imap(requests, stream=False, size=2, exception_handler=None):
     :param requests: a generator of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. default is 2
-    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
+    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception (Either an instance of exception, or None)
     """
 
     pool = Pool(size)
@@ -144,6 +144,6 @@ def imap(requests, stream=False, size=2, exception_handler=None):
         if request.response:
             yield request.response
         elif exception_handler:
-            exception_handler(request, request.exception)
+            exception_handler(request, getattr(request, 'exception', None))
 
     pool.join()
