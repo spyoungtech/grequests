@@ -68,7 +68,7 @@ class AsyncRequest(object):
         merged_kwargs.update(self.kwargs)
         merged_kwargs.update(kwargs)
         try:
-            self.response =  self.session.request(self.method,
+            self.response = self.session.request(self.method,
                                                 self.url, **merged_kwargs)
         except Exception as e:
             self.exception = e
