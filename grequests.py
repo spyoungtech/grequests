@@ -100,27 +100,28 @@ def request(method, url, **kwargs):
     return AsyncRequest(method, url, **kwargs)
 
 
-def map(requests, stream=False, size=None, exception_handler=None):
+def map(requests, stream=False, size=None, exception_handler=None, gtimeout=None):
     """Concurrently converts a list of Requests to Responses.
 
     :param requests: a collection of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
     :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
+    :param gtimeout: Gevent joinall timeout in seconds. (Note: unrelated to requests timeout)
     """
 
     requests = list(requests)
 
     pool = Pool(size) if size else None
     jobs = [send(r, pool, stream=stream) for r in requests]
-    gevent.joinall(jobs)
+    gevent.joinall(jobs, timeout=gtimeout)
 
     ret = []
 
     for request in requests:
         if request.response is not None:
             ret.append(request.response)
-        elif exception_handler:
+        elif exception_handler and hasattr(request, 'exception'):
             ret.append(exception_handler(request, request.exception))
         else:
             ret.append(None)
