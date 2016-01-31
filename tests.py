@@ -30,6 +30,7 @@ import time
 import unittest
 
 import requests
+from requests.exceptions import Timeout
 import grequests
 
 HTTPBIN_URL = os.environ.get('HTTPBIN_URL', 'http://httpbin.org/')
@@ -119,15 +120,99 @@ class GrequestsCase(unittest.TestCase):
         grequests.map(reqs, size=n)
         self.assertLess((time.time() - t), n)
 
-    def test_map_timeout(self):
+    def test_map_timeout_no_exception_handler(self):
+        """
+        compliance with existing 0.2.0 behaviour
+        """
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
         responses = grequests.map(reqs)
+        self.assertIsNone(responses[0])
+        self.assertTrue(responses[1].ok)
+        self.assertEqual(len(responses), 2)
+
+    def test_map_timeout_exception_handler_returns_false(self):
+        """
+        if you don't want your exceptions to show up in the map result
+        """
+        def exception_handler(request, exception):
+            return False
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
+        responses = grequests.map(reqs, exception_handler=exception_handler)
+        self.assertTrue(responses[0].ok)
         self.assertEqual(len(responses), 1)
 
-    def test_imap_timeout(self):
+    def test_map_timeout_exception_handler_no_return(self):
+        """
+        ensure default behaviour for a handler that returns None
+        """
+        def exception_handler(request, exception):
+            pass
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
-        responses = list(grequests.imap(reqs))
-        self.assertEqual(len(responses), 1)
+        responses = grequests.map(reqs, exception_handler=exception_handler)
+        self.assertIsNone(responses[0])
+        self.assertTrue(responses[1].ok)
+        self.assertEqual(len(responses), 2)
+
+    def test_map_timeout_exception_handler_returns_exception(self):
+        """
+        ensure returned value from exception handler is stuffed in the map result
+        """
+        def exception_handler(request, exception):
+            return exception
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
+        responses = grequests.map(reqs, exception_handler=exception_handler)
+        self.assertIsInstance(responses[0], Timeout)
+        self.assertTrue(responses[1].ok)
+        self.assertEqual(len(responses), 2)
+
+    def test_imap_timeout_no_exception_handler(self):
+        """
+        compliance with existing 0.2.0 behaviour
+        """
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
+        out = []
+        try:
+            for r in grequests.imap(reqs):
+                out.append(r)
+        except Timeout:
+            pass
+        self.assertEquals(out, [])
+
+    def test_imap_timeout_exception_handler_no_return(self):
+        """
+        ensure imap-default behaviour for a handler that returns None
+        """
+        def exception_handler(request, exception):
+            pass
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
+        out = []
+        for r in grequests.imap(reqs, exception_handler=exception_handler):
+            out.append(r)
+        self.assertEquals(out, [])
+
+    def test_imap_timeout_exception_handler_returns_false(self):
+        """
+        ensure map-compatible behaviour for a handler that returns False
+        """
+        def exception_handler(request, exception):
+            return False
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
+        out = []
+        for r in grequests.imap(reqs, exception_handler=exception_handler):
+            out.append(r)
+        self.assertEquals(out, [])
+
+    def test_imap_timeout_exception_handler_returns_value(self):
+        """
+        ensure behaviour for a handler that returns a value
+        """
+        def exception_handler(request, exception):
+            return request
+        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
+        out = []
+        for r in grequests.imap(reqs, exception_handler=exception_handler):
+            out.append(r)
+        self.assertEquals(out, [])
 
     def test_map_timeout_exception(self):
         class ExceptionHandler:
