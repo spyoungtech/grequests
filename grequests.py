@@ -48,6 +48,10 @@ class AsyncRequest(object):
         if self.session is None:
             self.session = Session()
 
+        # Added a kwargs (the 'source') to be able to map the request back to it's source object
+        #: Source of the request
+        self.source = kwargs.pop('source', None)
+
         callback = kwargs.pop('callback', None)
         if callback:
             kwargs['hooks'] = {'response': callback}
@@ -68,8 +72,9 @@ class AsyncRequest(object):
         merged_kwargs.update(self.kwargs)
         merged_kwargs.update(kwargs)
         try:
-            self.response =  self.session.request(self.method,
-                                                self.url, **merged_kwargs)
+            self.response = self.session.request(self.method, self.url, **merged_kwargs)
+            # Add the source in the response object to be able to map it back to the source object
+            self.response.source = self.source
         except Exception as e:
             self.exception = e
             self.traceback = traceback.format_exc()
