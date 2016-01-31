@@ -8,7 +8,9 @@ Requests easily.
 Usage
 -----
 
-Usage is simple::
+Usage is simple:
+
+.. code-block:: python
 
     import grequests
 
@@ -21,18 +23,24 @@ Usage is simple::
         'http://kennethreitz.com'
     ]
 
-Create a set of unsent Requests::
+Create a set of unsent Requests:
+
+.. code-block:: python
 
     >>> rs = (grequests.get(u) for u in urls)
 
-Send them all at the same time::
+Send them all at the same time:
+
+.. code-block:: python
 
     >>> grequests.map(rs)
     [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, None, <Response [200]>]
 
 Optionally, in the event of a timeout or any other exception during the connection of
 the request, you can add an exception handler that will be called with the request and
-exception inside the main thread::
+exception inside the main thread:
+
+.. code-block:: python
 
     >>> def exception_handler(request, exception):
     ...    print "Request failed"
