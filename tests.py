@@ -130,17 +130,6 @@ class GrequestsCase(unittest.TestCase):
         self.assertTrue(responses[1].ok)
         self.assertEqual(len(responses), 2)
 
-    def test_map_timeout_exception_handler_returns_false(self):
-        """
-        if you don't want your exceptions to show up in the map result
-        """
-        def exception_handler(request, exception):
-            return False
-        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001), grequests.get(httpbin('/'))]
-        responses = grequests.map(reqs, exception_handler=exception_handler)
-        self.assertTrue(responses[0].ok)
-        self.assertEqual(len(responses), 1)
-
     def test_map_timeout_exception_handler_no_return(self):
         """
         ensure default behaviour for a handler that returns None
