@@ -9,3 +9,4 @@ Development Lead
 Patches and Suggestions
 ```````````````````````
 - Kracekumar <me@kracekumar.com>
+- Daniel Dong <danieldong7@icloud.com>

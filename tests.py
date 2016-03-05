@@ -46,6 +46,34 @@ URLS = [httpbin('get?p=%s' % i) for i in range(N)]
 
 class GrequestsCase(unittest.TestCase):
 
+    def test_async_request_with_exception_handler(self):
+        good_url = 'https://github.com'
+        bad_url = 'http://bad.url'
+        timeout = 3
+        flag = {}
+
+        def response_handler(response, **kwargs):
+            flag['ok'] = True
+
+        def exception_handler(req, exc):
+            flag['error'] = True
+
+        req = grequests.get(good_url, callback=response_handler, exception_handler=exception_handler)
+        flag['ok'] = False
+        flag['error'] = False
+        grequests.send(req)
+        time.sleep(timeout)
+        self.assertTrue(flag['ok'])
+        self.assertFalse(flag['error'])
+
+        req = grequests.get(bad_url, callback=response_handler, exception_handler=exception_handler)
+        flag['ok'] = False
+        flag['error'] = False
+        grequests.send(req)
+        time.sleep(timeout)
+        self.assertFalse(flag['ok'])
+        self.assertTrue(flag['error'])
+
     def test_map(self):
         reqs = [grequests.get(url) for url in URLS]
         resp = grequests.map(reqs, size=N)

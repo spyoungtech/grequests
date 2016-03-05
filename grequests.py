@@ -52,6 +52,8 @@ class AsyncRequest(object):
         if callback:
             kwargs['hooks'] = {'response': callback}
 
+        self.exception_handler = kwargs.pop('exception_handler', None)
+
         #: The rest arguments for ``Session.request``
         self.kwargs = kwargs
         #: Resulting ``Response``
@@ -73,6 +75,8 @@ class AsyncRequest(object):
         except Exception as e:
             self.exception = e
             self.traceback = traceback.format_exc()
+            if self.exception_handler:
+                self.exception_handler(self, self.exception)
         return self
 
 
