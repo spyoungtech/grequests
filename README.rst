@@ -54,6 +54,7 @@ exception inside the main thread:
     Request failed
     [None, None, <Response [500]>]
 
+For some speed/performance gains, you may also want to use `imap` instead of `map`. `imap` returns a generator of responses. Order of these responses does not map to the order of the requests you send out. The API for `imap` is equivalent to the API for `map`.
 
 Installation
 ------------
