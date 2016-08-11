@@ -230,6 +230,10 @@ class GrequestsCase(unittest.TestCase):
     def get(self, url, **kwargs):
         return grequests.map([grequests.get(url, **kwargs)])[0]
 
+    def test_404_is_normal_response(self):
+        reqs = [grequests.get(httpbin('status/404'))]
+        responses = list(grequests.imap(reqs))
+        self.assertEqual(len(responses), 1)
 
 if __name__ == '__main__':
     unittest.main()
