@@ -123,6 +123,8 @@ def map(requests, stream=False, size=None, exception_handler=None, gtimeout=None
             ret.append(request.response)
         elif exception_handler and hasattr(request, 'exception'):
             ret.append(exception_handler(request, request.exception))
+        elif exception_handler and not hasattr(request, 'exception'):
+            ret.append(exception_handler(request, None))
         else:
             ret.append(None)
 
