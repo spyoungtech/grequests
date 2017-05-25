@@ -21,6 +21,7 @@ except ImportError:
 curious_george.patch_all(thread=False, select=False)
 
 from requests import Session
+from requests import Response
 
 
 __all__ = (
@@ -73,6 +74,7 @@ class AsyncRequest(object):
         except Exception as e:
             self.exception = e
             self.traceback = traceback.format_exc()
+            self.response = Response()
         return self
 
 
