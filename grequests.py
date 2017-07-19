@@ -73,6 +73,8 @@ class AsyncRequest(object):
         except Exception as e:
             self.exception = e
             self.traceback = traceback.format_exc()
+        finally:
+            self.session.close()
         return self
 
 
