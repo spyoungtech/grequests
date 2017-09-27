@@ -18,7 +18,7 @@ except ImportError:
     raise RuntimeError('Gevent is required for grequests.')
 
 # Monkey-patch.
-curious_george.patch_all(thread=False, select=False)
+curious_george.patch_all(thread=False, select=False, subprocess=False)
 
 from requests import Session
 
