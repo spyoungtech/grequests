@@ -4,6 +4,8 @@ GRequests: Asynchronous Requests
 GRequests allows you to use Requests with Gevent to make asynchronous HTTP
 Requests easily.
 
+**Note**: You should probably use `requests-threads <https://github.com/requests/requests-threads>`_ or `requests-futures <https://github.com/ross/requests-futures>`_ instead.
+
 
 Usage
 -----
