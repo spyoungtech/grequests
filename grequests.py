@@ -57,6 +57,32 @@ class AsyncRequest(object):
         #: Resulting ``Response``
         self.response = None
 
+        #: exception_handler
+        self.exception_handler = kwargs.pop('exception_handler', None)
+        #: max_depth suppose to be 1, it maybe an option in `kwargs`
+        self.max_depth = 1
+
+    def __enter__(self):
+        self.max_depth -= 1
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        """Implement a Context Management Protocol to handle exception which
+        happened in `self.session.request`, self.exception_handler inside and so on.
+        Mark down exception type, value and traceback like old implement.
+        """
+        if self.response:
+            return True
+        self.traceback = exc_tb
+        self.exception = exc_value
+        if self.max_depth >= 0 and self.exception_handler:
+            self.exception = (exc_type, self.exception)
+            with self:
+                self.exc_result = self.exception_handler(self)
+        # catch exception inside context management
+        return True
+
+
     def send(self, **kwargs):
         """
         Prepares request based on parameter passed to constructor and optional ``kwargs```.
@@ -67,12 +93,10 @@ class AsyncRequest(object):
         merged_kwargs = {}
         merged_kwargs.update(self.kwargs)
         merged_kwargs.update(kwargs)
-        try:
-            self.response = self.session.request(self.method,
-                                                self.url, **merged_kwargs)
-        except Exception as e:
-            self.exception = e
-            self.traceback = traceback.format_exc()
+
+        with self:
+            self.response = self.session.request(self.method, self.url, **merged_kwargs)
+
         return self
 
 
@@ -121,6 +145,8 @@ def map(requests, stream=False, size=None, exception_handler=None, gtimeout=None
     for request in requests:
         if request.response is not None:
             ret.append(request.response)
+        elif getattr(request, "exc_result", None):
+            ret.append(request.exc_result)
         elif exception_handler and hasattr(request, 'exception'):
             ret.append(exception_handler(request, request.exception))
         else:
@@ -147,7 +173,11 @@ def imap(requests, stream=False, size=2, exception_handler=None):
     for request in pool.imap_unordered(send, requests):
         if request.response is not None:
             yield request.response
+        elif getattr(request, "exc_result", None):
+            yield request.exc_result
         elif exception_handler:
-            exception_handler(request, request.exception)
+            yield exception_handler(request, request.exception)
+        else:
+            yield None
 
     pool.join()
