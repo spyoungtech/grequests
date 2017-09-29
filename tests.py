@@ -28,9 +28,10 @@ def test_imap_with_size():
 import os
 import time
 import unittest
+from functools import partial
 
 import requests
-from requests.exceptions import Timeout
+from requests.exceptions import Timeout, ConnectTimeout
 import grequests
 
 HTTPBIN_URL = os.environ.get('HTTPBIN_URL', 'http://httpbin.org/')
@@ -45,6 +46,70 @@ URLS = [httpbin('get?p=%s' % i) for i in range(N)]
 
 
 class GrequestsCase(unittest.TestCase):
+
+    def test_request_with_own_exception_handler(self):
+        exc_dict = {
+            'exc_type': None,
+            'exc_value': None,
+            'feature': None
+        }
+        legal_url = 'http://www.github.com'
+        fake_url = 'http://fakedomain'
+
+        def _exception_handler1(request, feature):
+            if isinstance(request.exception, (list, tuple)):
+                exc_dict['exc_value'] = request.exception[0]
+                exc_dict['exc_type'] = request.exception[1]
+            exc_dict['feature'] = feature
+            return request.exception
+
+        def _exception_handler2(request, feature=None):
+            if feature:
+                return request.exception, feature
+            else:
+                return request.exception
+
+        rs = [
+            grequests.get(
+                httpbin('delay/1'), timeout=0.001,
+                exception_handler=partial(_exception_handler1, feature=3)),
+            grequests.get(legal_url, exception_handler=_exception_handler2),
+            grequests.get(
+                fake_url,
+                exception_handler=partial(_exception_handler2,feature='sorry'))
+        ]
+
+        res = grequests.map(rs)
+
+        self.assertIn(ConnectTimeout, res[0])
+        self.assertIsNotNone(exc_dict['exc_type'])
+        self.assertIsNotNone(exc_dict['exc_value'])
+        self.assertIsNotNone(exc_dict['feature'])
+        self.assertEqual(exc_dict['feature'], 3)
+        if hasattr(exc_dict['exc_value'], 'request'):
+            self.assertIsInstance(exc_dict['exc_value'].request, requests.PreparedRequest)
+
+        self.assertEqual(getattr(rs[0], 'exc_result', None),
+                         (exc_dict['exc_value'], exc_dict['exc_type']))
+
+        self.assertIsInstance(res[1], requests.Response)
+        self.assertIsNotNone(res[2][0])
+        self.assertIsInstance(res[2][0], (list, tuple), res[2][0])
+        self.assertEqual(res[2][1], 'sorry')
+
+    def test_exception_handler_raise_error(self):
+        """When `exception_handler` raise Exception, it will action like
+        original implement, which catch Exception and setattr exception and traceback
+        """
+
+        def _exception_handler(exception):
+            raise Exception("Opps")
+
+        rs = grequests.get("http://fakedomain", exception_handler=_exception_handler)
+        grequests.send(rs)
+        time.sleep(3)
+        self.assertIsNotNone(getattr(rs, 'exception', None))
+        self.assertIsNotNone(getattr(rs, 'traceback', None))
 
     def test_map(self):
         reqs = [grequests.get(url) for url in URLS]
@@ -165,7 +230,7 @@ class GrequestsCase(unittest.TestCase):
                 out.append(r)
         except Timeout:
             pass
-        self.assertEquals(out, [])
+        self.assertEquals(out, [None])
 
     def test_imap_timeout_exception_handler_no_return(self):
         """
@@ -177,7 +242,7 @@ class GrequestsCase(unittest.TestCase):
         out = []
         for r in grequests.imap(reqs, exception_handler=exception_handler):
             out.append(r)
-        self.assertEquals(out, [])
+        self.assertEquals(out, [None])
 
     def test_imap_timeout_exception_handler_returns_false(self):
         """
@@ -189,7 +254,7 @@ class GrequestsCase(unittest.TestCase):
         out = []
         for r in grequests.imap(reqs, exception_handler=exception_handler):
             out.append(r)
-        self.assertEquals(out, [])
+        self.assertEquals(out, [False])
 
     def test_imap_timeout_exception_handler_returns_value(self):
         """
@@ -201,7 +266,7 @@ class GrequestsCase(unittest.TestCase):
         out = []
         for r in grequests.imap(reqs, exception_handler=exception_handler):
             out.append(r)
-        self.assertEquals(out, [])
+        self.assertFalse((not out))
 
     def test_map_timeout_exception(self):
         class ExceptionHandler:
