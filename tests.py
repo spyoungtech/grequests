@@ -179,29 +179,18 @@ class GrequestsCase(unittest.TestCase):
             out.append(r)
         self.assertEquals(out, [])
 
-    def test_imap_timeout_exception_handler_returns_false(self):
-        """
-        ensure map-compatible behaviour for a handler that returns False
-        """
-        def exception_handler(request, exception):
-            return False
-        reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
-        out = []
-        for r in grequests.imap(reqs, exception_handler=exception_handler):
-            out.append(r)
-        self.assertEquals(out, [])
 
     def test_imap_timeout_exception_handler_returns_value(self):
         """
         ensure behaviour for a handler that returns a value
         """
         def exception_handler(request, exception):
-            return request
+            return 'a value'
         reqs = [grequests.get(httpbin('delay/1'), timeout=0.001)]
         out = []
         for r in grequests.imap(reqs, exception_handler=exception_handler):
             out.append(r)
-        self.assertEquals(out, [])
+        self.assertEquals(out, ['a value'])
 
     def test_map_timeout_exception(self):
         class ExceptionHandler:

@@ -148,6 +148,8 @@ def imap(requests, stream=False, size=2, exception_handler=None):
         if request.response is not None:
             yield request.response
         elif exception_handler:
-            exception_handler(request, request.exception)
+            ex_result = exception_handler(request, request.exception)
+            if ex_result is not None:
+                yield ex_result
 
     pool.join()
