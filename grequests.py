@@ -129,6 +129,36 @@ def map(requests, stream=False, size=None, exception_handler=None, gtimeout=None
     return ret
 
 
+def dictmap(requests, stream=False, size=None, exception_handler=None, gtimeout=None):
+    """Concurrently converts a dict of Requests with the format - {key1: request1, key2: request2}.
+    to Responses.
+
+    :param requests: a collection of Request objects.
+    :param stream: If True, the content will not be downloaded immediately.
+    :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
+    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
+    :param gtimeout: Gevent joinall timeout in seconds. (Note: unrelated to requests timeout)
+    """
+
+    requests = dict(requests)
+
+    pool = Pool(size) if size else None
+    jobs = [send(r, pool, stream=stream) for r in requests]
+    gevent.joinall(jobs, timeout=gtimeout)
+
+    ret = {}
+
+    for request_key, request in requests.items():
+        if request.response is not None:
+            ret[request_key] = request.response
+        elif exception_handler and hasattr(request, 'exception'):
+            ret[request_key] = exception_handler(request, request.exception)
+        else:
+            ret[request_key] = None
+
+    return ret
+
+
 def imap(requests, stream=False, size=2, exception_handler=None):
     """Concurrently converts a generator object of Requests to
     a generator of Responses.
