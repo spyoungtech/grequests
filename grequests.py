@@ -130,10 +130,9 @@ def map(requests, stream=False, size=None, exception_handler=None, gtimeout=None
 
 
 def dictmap(requests, stream=False, size=None, exception_handler=None, gtimeout=None):
-    """Concurrently converts a dict of Requests with the format - {key1: request1, key2: request2}.
-    to Responses.
+    """Concurrently converts a dict of Requests to Responses.
 
-    :param requests: a collection of Request objects.
+    :param requests: a dictionary of Request objects in the format {key1: request1, key2: request2}.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
     :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
