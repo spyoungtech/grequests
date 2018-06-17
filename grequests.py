@@ -70,6 +70,7 @@ class AsyncRequest(object):
         try:
             self.response = self.session.request(self.method,
                                                 self.url, **merged_kwargs)
+            self.url = self.response.url
         except Exception as e:
             self.exception = e
             self.traceback = traceback.format_exc()
