@@ -136,7 +136,7 @@ def imap(requests, stream=False, size=2, exception_handler=None):
     :param requests: a generator of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. default is 2
-    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
+    :param exception_handler: Callback function, called when exception occurred. Params: Request, Exception
     """
 
     pool = Pool(size)
