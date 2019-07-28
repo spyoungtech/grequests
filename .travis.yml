@@ -1,0 +1,27 @@
+dist: xenial
+language: python
+
+
+python:
+  - "2.7"
+  - "3.6"
+  - "3.7"
+
+
+install:
+  - pip install -r requirements.txt
+  - pip install pytest
+
+script:
+  - pytest tests.py
+
+
+deploy:
+  provider: pypi
+  distributions: "sdist bdist_wheel"
+  user: "spyoungtech"
+  password:
+    secure: "QtuuH0X/A/iQI23MxvqsnxUy63XD5awJHDkeQNmUDIGGQqIox2DTYKoc6x354I5wpqprtODQRYRqIsA9+2cpRcF49Ft50cvi3cmuoeozkID3ybQyLHCIcJ4CKt6X+h2LFbrgqyyBcny7tKQlYr4/nsjeQegPblnJ6OTljJgJyE0="
+  on:
+    tags: true
+    python: 3.6
