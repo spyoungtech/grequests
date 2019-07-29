@@ -4,6 +4,9 @@ GRequests: Asynchronous Requests
 GRequests allows you to use Requests with Gevent to make asynchronous HTTP
 Requests easily.
 
+|version| |pyversions|
+
+
 **Note**: You should probably use `requests-threads <https://github.com/requests/requests-threads>`_ or `requests-futures <https://github.com/ross/requests-futures>`_ instead.
 
 
@@ -65,3 +68,10 @@ Installation is easy with pip::
 
     $ pip install grequests
     ✨🍰✨
+
+
+.. |version| image:: https://img.shields.io/pypi/v/grequests.svg?colorB=blue
+    :target: https://pypi.org/project/grequests/
+
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/grequests.svg?
+    :target: https://pypi.org/project/grequests/
