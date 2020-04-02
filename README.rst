@@ -48,7 +48,7 @@ exception inside the main thread:
 .. code-block:: python
 
     >>> def exception_handler(request, exception):
-    ...    print "Request failed"
+    ...    print("Request failed")
 
     >>> reqs = [
     ...    grequests.get('http://httpbin.org/delay/1', timeout=0.001),
