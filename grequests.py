@@ -10,6 +10,7 @@ by gevent. All API methods return a ``Request`` instance (as opposed to
 """
 from functools import partial
 import traceback
+
 try:
     import gevent
     from gevent import monkey as curious_george
@@ -21,7 +22,6 @@ except ImportError:
 curious_george.patch_all(thread=False, select=False)
 
 from requests import Session
-
 
 __all__ = (
     'map', 'imap',
@@ -47,6 +47,9 @@ class AsyncRequest(object):
         self.session = kwargs.pop('session', None)
         if self.session is None:
             self.session = Session()
+            self._close = True
+        else:
+            self._close = False  # don't close adapters after each request if the user provided the session
 
         callback = kwargs.pop('callback', None)
         if callback:
@@ -57,6 +60,7 @@ class AsyncRequest(object):
         #: Resulting ``Response``
         self.response = None
 
+    @profile
     def send(self, **kwargs):
         """
         Prepares request based on parameter passed to constructor and optional ``kwargs```.
@@ -73,6 +77,11 @@ class AsyncRequest(object):
         except Exception as e:
             self.exception = e
             self.traceback = traceback.format_exc()
+        finally:
+            if self._close:
+                # if we provided the session object, make sure we're cleaning up
+                # because there's no sense in keeping it open at this point if it wont be reused
+                self.session.close()
         return self
 
 
