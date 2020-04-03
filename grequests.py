@@ -60,7 +60,6 @@ class AsyncRequest(object):
         #: Resulting ``Response``
         self.response = None
 
-    @profile
     def send(self, **kwargs):
         """
         Prepares request based on parameter passed to constructor and optional ``kwargs```.
