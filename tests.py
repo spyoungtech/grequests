@@ -165,7 +165,7 @@ class GrequestsCase(unittest.TestCase):
                 out.append(r)
         except Timeout:
             pass
-        self.assertEquals(out, [])
+        self.assertEqual(out, [])
 
     def test_imap_timeout_exception_handler_no_return(self):
         """
@@ -177,7 +177,7 @@ class GrequestsCase(unittest.TestCase):
         out = []
         for r in grequests.imap(reqs, exception_handler=exception_handler):
             out.append(r)
-        self.assertEquals(out, [])
+        self.assertEqual(out, [])
 
 
     def test_imap_timeout_exception_handler_returns_value(self):
@@ -190,7 +190,7 @@ class GrequestsCase(unittest.TestCase):
         out = []
         for r in grequests.imap(reqs, exception_handler=exception_handler):
             out.append(r)
-        self.assertEquals(out, ['a value'])
+        self.assertEqual(out, ['a value'])
 
     def test_map_timeout_exception(self):
         class ExceptionHandler:
