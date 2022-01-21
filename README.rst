@@ -61,6 +61,15 @@ exception inside the main thread:
 
 For some speed/performance gains, you may also want to use `imap` instead of `map`. `imap` returns a generator of responses. Order of these responses does not map to the order of the requests you send out. The API for `imap` is equivalent to the API for `map`.
 
+To pass parameters in request, you can pass them in `params` dict just as in `requests.get`:
+
+.. code-block:: python
+
+    >>> reqs = [
+    ...    grequests.get('some-url', params={'param1': 'value1'}),
+    ...    grequests.get('some-other-url', params={'param2': 'value2'})]
+    >>> grequests.map(reqs)
+
 Installation
 ------------
 
