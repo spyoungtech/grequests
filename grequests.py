@@ -114,7 +114,7 @@ def map(requests, stream=False, size=None, exception_handler=None, gtimeout=None
     :param requests: a collection of Request objects.
     :param stream: If True, the content will not be downloaded immediately.
     :param size: Specifies the number of requests to make at a time. If None, no throttling occurs.
-    :param exception_handler: Callback function, called when exception occured. Params: Request, Exception
+    :param exception_handler: Callback function, called when exception occurred. Params: Request, Exception
     :param gtimeout: Gevent joinall timeout in seconds. (Note: unrelated to requests timeout)
     """
 
