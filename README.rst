@@ -80,6 +80,22 @@ For some speed/performance gains, you may also want to use ``imap`` instead of `
         print(resp)
 
 
+There is also an enumerated version of ``imap`` which yields the index and response. However, unlike ``imap`` the ``requests`` parameter for ``imap_enumerated`` must be a sequence. Additionally,
+failed requests and exception handler results that return None will also be yielded (whereas in ``imap`` they are ignored). Like in ``imap``, the order in which requests are sent and received should be
+considered arbitrary.
+
+.. code-block:: python
+
+    >>> rs = [grequests.get(f'https://httpbin.org/status/{code}') for code in range(200, 206)]
+    >>> for index, response in grequests.imap_enumerated(rs, size=5):
+    ...     print(index, response)
+    1 <Response [201]>
+    0 <Response [200]>
+    4 <Response [204]>
+    2 <Response [202]>
+    5 <Response [205]>
+    3 <Response [203]>
+
 
 NOTE: because ``grequests`` leverages ``gevent`` (which in turn uses monkeypatching for enabling concurrency), you will often need to make sure ``grequests`` is imported before other libraries, especially ``requests``, to avoid problems. See `grequests gevent issues <https://github.com/spyoungtech/grequests/issues?q=is%3Aissue+label%3A%22%3Ahear_no_evil%3A%3Asee_no_evil%3A%3Aspeak_no_evil%3A++gevent%22+>`_ for additional information.
 

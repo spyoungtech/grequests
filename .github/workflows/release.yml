@@ -1,0 +1,37 @@
+name: release
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: build
+      shell: bash
+      run: |
+        python -m pip install --upgrade wheel gevent
+        python setup.py sdist bdist_wheel --universal
+    - name: Release PyPI
+      shell: bash
+      env:
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      run: |
+        pip install --upgrade twine
+        twine upload dist/*
+
+    - name: Release GitHub
+      uses: softprops/action-gh-release@v1
+      with:
+        files: "dist/*"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

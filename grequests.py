@@ -163,3 +163,51 @@ def imap(requests, stream=False, size=2, exception_handler=None):
                 yield ex_result
 
     pool.join()
+
+
+def imap_enumerated(requests, stream=False, size=2, exception_handler=None):
+    """
+    Like imap, but yields tuple of original request index and response object
+
+    Unlike imap, failed results and responses from exception handlers that return None are not ignored. Instead, a
+    tuple of (index, None) is yielded. Additionally, the ``requests`` parameter must be a sequence of Request objects
+    (generators or other non-sequence iterables are not allowed)
+
+    The index is merely the original index of the original request in the requests list and does NOT provide any
+    indication of the order in which requests or responses are sent or received. Responses are still in arbitrary order.
+
+    ::
+        >>> rs = [grequests.get(f'https://httpbin.org/status/{i}') for i in range(200, 206)]
+        >>> for index, response in grequests.imap_enumerated(rs, size=5):
+        ...     print(index, response)
+        1 <Response [201]>
+        0 <Response [200]>
+        4 <Response [204]>
+        2 <Response [202]>
+        5 <Response [205]>
+        3 <Response [203]>
+
+
+    :param requests: a sequence of Request objects.
+    :param stream: If True, the content will not be downloaded immediately.
+    :param size: Specifies the number of requests to make at a time. default is 2
+    :param exception_handler: Callback function, called when exception occurred. Params: Request, Exception
+    """
+
+    pool = Pool(size)
+
+    def send(r):
+        return r._index, r.send(stream=stream)
+
+    requests = list(requests)
+    for index, req in enumerate(requests):
+        req._index = index
+
+    for index, request in pool.imap_unordered(send, requests):
+        if request.response is not None:
+            yield index, request.response
+        elif exception_handler:
+            ex_result = exception_handler(request, request.exception)
+            yield index, ex_result
+        else:
+            yield index, None
