@@ -33,8 +33,8 @@ from setuptools import setup
 
 setup(
     name='grequests',
-    version='0.6.0',
-    url='https://github.com/kennethreitz/grequests',
+    version='0.7.0',
+    url='https://github.com/spyoungtech/grequests',
     license='BSD',
     author='Kenneth Reitz',
     author_email='me@kennethreitz.com',
