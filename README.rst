@@ -7,8 +7,6 @@ Requests easily.
 |version| |pyversions|
 
 
-**Note**: You should probably use `requests-threads <https://github.com/requests/requests-threads>`_ or `requests-futures <https://github.com/ross/requests-futures>`_ instead.
-
 
 Installation
 ------------
@@ -43,7 +41,7 @@ Create a set of unsent Requests:
 
     >>> rs = (grequests.get(u) for u in urls)
 
-Send them all at the same time:
+Send them all at the same time using ``map``:
 
 .. code-block:: python
 
@@ -51,11 +49,15 @@ Send them all at the same time:
     [<Response [200]>, <Response [200]>, <Response [200]>, <Response [200]>, None, <Response [200]>]
 
 
-The HTTP verb methods in ``grequests`` (``grequests.get``, ``grequests.post``, etc) accept all the same keyword arguments as in the ``requests`` library.
+The HTTP verb methods in ``grequests`` (e.g., ``grequests.get``, ``grequests.post``, etc.) accept all the same keyword arguments as in the ``requests`` library.
+
+Error Handling
+^^^^^^^^^^^^^^
 
 To handle timeouts or any other exception during the connection of
 the request, you can add an optional exception handler that will be called with the request and
-exception inside the main thread:
+exception inside the main thread. The value returned by your exception handler will be used in the result list returned by ``map``.
+
 
 .. code-block:: python
 
@@ -71,6 +73,10 @@ exception inside the main thread:
     Request failed
     [None, None, <Response [500]>]
 
+
+imap
+^^^^
+
 For some speed/performance gains, you may also want to use ``imap`` instead of ``map``. ``imap`` returns a generator of responses. Order of these responses does not map to the order of the requests you send out. The API for ``imap`` is equivalent to the API for ``map``. You can also adjust the ``size`` argument to ``map`` or ``imap`` to increase the gevent pool size.
 
 
@@ -80,9 +86,7 @@ For some speed/performance gains, you may also want to use ``imap`` instead of `
         print(resp)
 
 
-There is also an enumerated version of ``imap`` which yields the index and response. However, unlike ``imap`` the ``requests`` parameter for ``imap_enumerated`` must be a sequence. Additionally,
-failed requests and exception handler results that return None will also be yielded (whereas in ``imap`` they are ignored). Like in ``imap``, the order in which requests are sent and received should be
-considered arbitrary.
+There is also an enumerated version of ``imap``, ``imap_enumerated`` which yields the index of the request from the original request list and its associated response. However, unlike ``imap``, failed requests and exception handler results that return ``None`` will also be yielded (whereas in ``imap`` they are ignored). Aditionally, the ``requests`` parameter for ``imap_enumerated`` must be a sequence. Like in ``imap``, the order in which requests are sent and received should still be considered arbitrary.
 
 .. code-block:: python
 
@@ -96,8 +100,10 @@ considered arbitrary.
     5 <Response [205]>
     3 <Response [203]>
 
+gevent - when things go wrong
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-NOTE: because ``grequests`` leverages ``gevent`` (which in turn uses monkeypatching for enabling concurrency), you will often need to make sure ``grequests`` is imported before other libraries, especially ``requests``, to avoid problems. See `grequests gevent issues <https://github.com/spyoungtech/grequests/issues?q=is%3Aissue+label%3A%22%3Ahear_no_evil%3A%3Asee_no_evil%3A%3Aspeak_no_evil%3A++gevent%22+>`_ for additional information.
+Because ``grequests`` leverages ``gevent`` (which in turn uses monkeypatching for enabling concurrency), you will often need to make sure ``grequests`` is imported before other libraries, especially ``requests``, to avoid problems. See `grequests gevent issues <https://github.com/spyoungtech/grequests/issues?q=is%3Aissue+label%3A%22%3Ahear_no_evil%3A%3Asee_no_evil%3A%3Aspeak_no_evil%3A++gevent%22+>`_ for additional information.
 
 
 .. code-block:: python
